@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scent Dispenser – Log Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    :root {
+      --green:       #2d6a4f;
+      --green-dark:  #1b4332;
+      --green-light: #52b788;
+      --red:         #ba1a1a;
+      --bg:          #f4f6f4;
+      --card:        #ffffff;
+      --border:      #dde3dd;
+      --text:        #1a1c1a;
+      --muted:       #5a6360;
+      --mono: 'Menlo', 'Consolas', 'Courier New', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 40px;
+      min-height: 100vh;
+    }
+
+    .wrap { max-width: 560px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { font-size: 1.35rem; color: var(--green-dark); font-weight: 700; }
+    header p  { color: var(--muted); font-size: 0.875rem; margin-top: 4px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Status row ── */
+    .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--border); flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .dot.on  { background: var(--green-light); }
+    .dot.err { background: var(--red); }
+    #status-text { font-size: 0.875rem; color: var(--muted); }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    button {
+      padding: 8px 18px;
+      border: none; border-radius: 7px;
+      font-size: 0.875rem; font-weight: 500;
+      cursor: pointer;
+      transition: filter 0.15s, opacity 0.15s;
+    }
+    button:disabled { opacity: 0.38; cursor: not-allowed; }
+    button:not(:disabled):hover { filter: brightness(0.92); }
+
+    .btn-green  { background: var(--green);  color: #fff; }
+    .btn-red    { background: var(--red);    color: #fff; }
+    .btn-gray   { background: #e0e5e0;       color: var(--text); }
+    .btn-chart  { background: #4a7c9e;       color: #fff; }
+
+    #btn-connect { min-width: 160px; }
+
+    /* ── Folder row ── */
+    .folder-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px; font-size: 0.82rem; flex-wrap: wrap;
+    }
+    .folder-label { color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    #folder-name  {
+      font-weight: 500; color: var(--text); flex: 1;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .btn-small {
+      padding: 4px 10px; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 0.78rem; cursor: pointer; background: #eef0ee; color: var(--text);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-small:hover { filter: brightness(0.92); }
+
+    /* ── Activity log ── */
+    #activity {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      background: #16181d;
+      color: #c9d1d9;
+      border-radius: 7px;
+      padding: 10px 12px;
+      height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .l-ok   { color: #7ee787; }
+    .l-err  { color: #ff7b72; }
+    .l-info { color: #79c0ff; }
+    .l-dim  { color: #6e7681; }
+
+    /* ── Chart card ── */
+    #chart-card { display: none; }
+    .chart-wrap { position: relative; height: 300px; margin-bottom: 12px; }
+
+    /* ── Compat banner ── */
+    .banner {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: #5d4037;
+      margin-bottom: 14px;
+    }
+    .banner strong { display: block; margin-bottom: 3px; }
+
+    /* ── Instructions ── */
+    .steps { font-size: 0.85rem; color: var(--muted); line-height: 1.75; }
+    .steps b { color: var(--text); }
+    .steps code {
+      font-family: var(--mono); font-size: 0.78rem;
+      background: #eef0ee; padding: 1px 5px; border-radius: 4px;
+    }
+
+    /* ── Back link ── */
+    .back { text-align: center; margin-top: 10px; }
+    .back a { font-size: 0.8rem; color: var(--muted); text-decoration: none; }
+    .back a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Scent Dispenser – Log Tool</h1>
+    <p>Download and clear device log data via USB-C</p>
+  </header>
+
+  <div id="compat-banner" class="banner" style="display:none">
+    <strong>Browser not supported</strong>
+    This tool may only work on <b>Chrome</b>, <b>Safari</b>, or <b>Edge</b>.
+    Firefox does not support the Web Serial API.
+  </div>
+
+  <!-- Instructions -->
+  <div class="card">
+    <div class="card-title">Instructions</div>
+    <div class="steps">
+      <b>1.</b> Connect the dispenser to your computer with a USB-C cable.<br>
+      <b>2.</b> Click <b>Connect to Device</b> and pick the correct port from the browser dialog.<br>
+      <b>3.</b> Click <b>Select Folder</b> and navigate to the <code>utility/logs</code> folder so files save there automatically.<br>
+      <b>4.</b> Click <b>Download Log</b> — a CSV is saved to the logs folder and a chart appears below.<br>
+      <b>5.</b> Optionally click <b>Clear Log Memory</b> to erase the log from the device.<br><br>
+      <b>Note:</b> May only work on Chrome, Safari, or Edge.
+    </div>
+  </div>
+
+  <!-- Connection -->
+  <div class="card">
+    <div class="card-title">Connection</div>
+    <div class="status-row">
+      <div class="dot" id="dot"></div>
+      <span id="status-text">Not connected</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-green" id="btn-connect" onclick="toggleConnect()">
+        Connect to Device
+      </button>
+    </div>
+    <p style="margin-top:10px;font-size:0.8rem;color:var(--muted)">
+      Use the <b>USB-C port</b> on the dispenser — not the UPDI programmer connector.
+    </p>
+  </div>
+
+  <!-- Actions -->
+  <div class="card">
+    <div class="card-title">Actions</div>
+
+    <div class="folder-row">
+      <span class="folder-label">Logs folder:</span>
+      <span id="folder-name">Downloads folder (default)</span>
+      <button class="btn-small" id="folder-btn" onclick="selectLogsFolder()">Select Folder</button>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-green" id="btn-dump" onclick="dumpLog()" disabled>
+        Download Log
+      </button>
+      <button class="btn-red" id="btn-clear" onclick="clearLog()" disabled>
+        Clear Log Memory
+      </button>
+    </div>
+    <p style="margin-top:10px;font-size:0.8rem;color:var(--muted)">
+      <b>Download Log</b> saves a <code>.csv</code> file named after the device ID
+      to the selected logs folder (or your Downloads folder if none is set).
+      Each download is a full snapshot — append previous files manually if needed.
+    </p>
+  </div>
+
+  <!-- Activity -->
+  <div class="card">
+    <div class="card-title">Activity</div>
+    <div id="activity"></div>
+  </div>
+
+  <!-- Chart (shown after successful download) -->
+  <div class="card" id="chart-card">
+    <div class="card-title" id="chart-title">Log Chart</div>
+    <div class="chart-wrap">
+      <canvas id="log-chart"></canvas>
+    </div>
+    <div class="btn-row">
+      <button class="btn-chart" onclick="saveChartPng()">Save Chart as PNG</button>
+    </div>
+  </div>
+
+  <div class="back"><a href="index.html">← Back to main page</a></div>
+
+</div><!-- /wrap -->
+
+<script>
+'use strict';
+
+// ── Compatibility ────────────────────────────────────────────────────────────
+if (!('serial' in navigator)) {
+  document.getElementById('compat-banner').style.display = 'block';
+  document.getElementById('btn-connect').disabled = true;
+}
+
+if (!window.showDirectoryPicker) {
+  document.getElementById('folder-btn').title =
+    'Folder selection is not supported in this browser — files will download normally.';
+  document.getElementById('folder-btn').disabled = true;
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let port      = null;
+let _reader   = null;
+let writer    = null;
+let bufReader = null;
+let connected = false;
+let busy      = false;
+let lastRows  = null;
+let lastDevId = null;
+let logsDir   = null;
+let chartInst = null;
+
+// ── Logging ──────────────────────────────────────────────────────────────────
+function log(msg, cls) {
+  const el = document.getElementById('activity');
+  const d  = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function setConnected(v) {
+  connected = v;
+  document.getElementById('dot').className           = 'dot' + (v ? ' on' : '');
+  document.getElementById('status-text').textContent = v ? 'Connected' : 'Not connected';
+  const btn = document.getElementById('btn-connect');
+  btn.textContent = v ? 'Disconnect' : 'Connect to Device';
+  btn.className   = v ? 'btn-gray' : 'btn-green';
+  refreshActionBtns();
+}
+
+function setBusy(v) {
+  busy = v;
+  document.getElementById('btn-connect').disabled = v;
+  refreshActionBtns();
+}
+
+function refreshActionBtns() {
+  const off = busy || !connected;
+  document.getElementById('btn-dump').disabled  = off;
+  document.getElementById('btn-clear').disabled = off;
+}
+
+// ── Logs folder selection ─────────────────────────────────────────────────────
+async function selectLogsFolder() {
+  try {
+    logsDir = await window.showDirectoryPicker({ mode: 'readwrite', id: 'scent-logs' });
+    document.getElementById('folder-name').textContent = logsDir.name + '/';
+    document.getElementById('folder-btn').textContent  = 'Change Folder';
+    log('Logs folder set to: ' + logsDir.name + '/', 'l-ok');
+  } catch (e) {
+    if (e.name !== 'AbortError') log('Folder selection failed: ' + e.message, 'l-err');
+  }
+}
+
+// ── Save file (to folder if selected, else browser download) ──────────────────
+async function saveToFolder(filename, content, mimeType) {
+  if (logsDir) {
+    try {
+      const fh = await logsDir.getFileHandle(filename, { create: true });
+      const w  = await fh.createWritable();
+      await w.write(new Blob([content], { type: mimeType }));
+      await w.close();
+      return;
+    } catch (e) {
+      log('Could not write to folder: ' + e.message + ' — falling back to download.', 'l-err');
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// ── Connection ────────────────────────────────────────────────────────────────
+async function toggleConnect() {
+  connected ? await disconnect() : await connect();
+}
+
+async function connect() {
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 9600 });
+    writer   = port.writable.getWriter();
+    _reader  = port.readable.getReader();
+    bufReader = new BufferedReader(_reader);
+    setConnected(true);
+    log('Connected.', 'l-ok');
+  } catch (e) {
+    if (e.name !== 'NotFoundError') log('Connection failed: ' + e.message, 'l-err');
+  }
+}
+
+async function disconnect() {
+  try {
+    if (_reader) { await _reader.cancel(); _reader.releaseLock(); _reader = null; }
+    if (writer)  { writer.releaseLock(); writer = null; }
+    if (port)    { await port.close(); port = null; }
+  } catch (_) { /* ignore */ }
+  bufReader = null;
+  setConnected(false);
+  log('Disconnected.', 'l-dim');
+}
+
+// ── BufferedReader ─────────────────────────────────────────────────────────────
+class BufferedReader {
+  constructor(reader) {
+    this._r   = reader;
+    this._buf = new Uint8Array(0);
+  }
+
+  async readUntil(delimiter, timeoutMs = 10000) {
+    const delim = typeof delimiter === 'string'
+      ? new TextEncoder().encode(delimiter)
+      : delimiter;
+    const timer = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout waiting for device response')), timeoutMs));
+    return Promise.race([this._readUntilInner(delim), timer]);
+  }
+
+  async _readUntilInner(delim) {
+    while (true) {
+      const idx = this._find(this._buf, delim);
+      if (idx !== -1) {
+        const result = this._buf.slice(0, idx);
+        this._buf = this._buf.slice(idx + delim.length);
+        return result;
+      }
+      const { value, done } = await this._r.read();
+      if (done) throw new Error('Port closed unexpectedly');
+      const merged = new Uint8Array(this._buf.length + value.length);
+      merged.set(this._buf);
+      merged.set(value, this._buf.length);
+      this._buf = merged;
+    }
+  }
+
+  _find(hay, needle) {
+    outer: for (let i = 0; i <= hay.length - needle.length; i++) {
+      for (let j = 0; j < needle.length; j++) {
+        if (hay[i + j] !== needle[j]) continue outer;
+      }
+      return i;
+    }
+    return -1;
+  }
+}
+
+// ── Binary log parser ─────────────────────────────────────────────────────────
+const LOG_TYPES     = ['RESET', 'WAKE', 'PUMP', 'CLOCK ERROR'];
+const RESET_REASONS = { 1:'POWER ON', 2:'BROWN OUT', 4:'EXTERNAL', 8:'WDT', 16:'SOFTWARE', 32:'UPDI' };
+const WAKE_REASONS  = ['UNDEFINED', 'POWER ON', 'RTC', 'OK BTN', 'USB'];
+const PUMP_REASONS  = ['AUTO', 'MANUAL'];
+
+function parseLog(buf) {
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const rows = [];
+  let i = 0;
+
+  while (i + 8 <= buf.length) {
+    const type = view.getUint8(i);
+    const id   = view.getUint16(i + 1, true);
+    const yr   = view.getUint8(i + 3);
+    const mo   = view.getUint8(i + 4);
+    const dy   = view.getUint8(i + 5);
+    const hr   = view.getUint8(i + 6);
+    const mn   = view.getUint8(i + 7);
+    i += 8;
+
+    // DATE format: YY-MM-DD (matches log.py)
+    const date = pad2(yr) + '-' + pad2(mo) + '-' + pad2(dy);
+    const time = pad2(hr) + ':' + pad2(mn);
+    let reason = '', tempChip = '', tempPcb = '', volts = '';
+
+    if (type === 0 || type === 2) {        // RESET or PUMP — 7-byte body
+      if (i + 7 > buf.length) break;
+      const rb = view.getUint8(i);
+      const tc = view.getInt16(i + 1, true);
+      const tp = view.getInt16(i + 3, true);
+      const vr = view.getUint16(i + 5, true);
+      i += 7;
+      reason   = type === 0 ? (RESET_REASONS[rb] || String(rb)) : (PUMP_REASONS[rb] || String(rb));
+      tempChip = (tc / 10).toFixed(1);
+      tempPcb  = (tp / 10).toFixed(1);
+      volts    = (vr / 100).toFixed(2);
+    } else if (type === 1) {               // WAKE — 1-byte body
+      if (i + 1 > buf.length) break;
+      reason = WAKE_REASONS[view.getUint8(i)] || '';
+      i += 1;
+    }
+    // type === 3 (CLOCK ERROR): no body bytes
+
+    rows.push({ id, type: LOG_TYPES[type] || String(type),
+                date, time, reason, tempChip, tempPcb, volts });
+  }
+  return rows;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function toCSV(rows) {
+  const hdr = 'ID,TYPE,DATE,TIME,REASON,CHIP TEMP C,PCB TEMP C,VOLTS\n';
+  return hdr + rows.map(r =>
+    [r.id, r.type, r.date, r.time, r.reason, r.tempChip, r.tempPcb, r.volts].join(',')
+  ).join('\n') + '\n';
+}
+
+// ── Dump log ──────────────────────────────────────────────────────────────────
+async function dumpLog() {
+  if (!connected || busy) return;
+  setBusy(true);
+  log('Starting log download…', 'l-info');
+  try {
+    await writer.write(new TextEncoder().encode('D\n'));
+    await bufReader.readUntil('\n');
+    await bufReader.readUntil('\n');
+    const devIdBytes = await bufReader.readUntil('\n');
+    const devId = new TextDecoder().decode(devIdBytes).trim();
+    log('Device ID: ' + (devId || 'NO ID SET'), 'l-info');
+
+    const terminator = new TextEncoder().encode('\nLOG DUMP END\n');
+    const raw = await bufReader.readUntil(terminator, 30000);
+    log('Received ' + raw.length + ' bytes.', 'l-dim');
+
+    const rows = parseLog(raw);
+    if (rows.length === 0) {
+      log('Log is empty — nothing to save.', 'l-info');
+    } else {
+      const filename = (devId || 'NO ID SET') + '.csv';
+      await saveToFolder(filename, toCSV(rows), 'text/csv');
+      log('Saved ' + rows.length + ' entries → ' + filename, 'l-ok');
+      lastRows  = rows;
+      lastDevId = devId || 'NO ID SET';
+      renderChart(rows, lastDevId);
+    }
+  } catch (e) {
+    log('Error: ' + e.message, 'l-err');
+    await disconnect();
+  } finally {
+    setBusy(false);
+  }
+}
+
+// ── Clear log ─────────────────────────────────────────────────────────────────
+async function clearLog() {
+  if (!connected || busy) return;
+  if (!confirm('Permanently erase all log data stored on this device?')) return;
+  setBusy(true);
+  log('Clearing log memory…', 'l-info');
+  try {
+    await writer.write(new TextEncoder().encode('C\n'));
+    await bufReader.readUntil('\n');
+    await bufReader.readUntil('\n');
+    log('Log memory cleared.', 'l-ok');
+  } catch (e) {
+    log('Error: ' + e.message, 'l-err');
+    await disconnect();
+  } finally {
+    setBusy(false);
+  }
+}
+
+// ── Chart rendering ───────────────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function formatLabel(r) {
+  const [yy, mm, dd] = r.date.split('-');
+  return MONTHS[(+mm) - 1] + ' ' + (+dd) + ' ' + r.time;
+}
+
+const EVENT_DEFS = [
+  { type:'RESET', test: r => r.reason === 'POWER ON',
+    label:'Reset – Power On',  color:'#2ca02c', pointStyle:'star',    radius:9, rotation:0   },
+  { type:'RESET', test: r => r.reason === 'BROWN OUT',
+    label:'Reset – Brown Out', color:'#d62728', pointStyle:'rectRot', radius:6, rotation:0   },
+  { type:'RESET', test: r => r.reason !== 'POWER ON' && r.reason !== 'BROWN OUT',
+    label:'Reset – Other',     color:'#7f7f7f', pointStyle:'rect',    radius:6, rotation:0   },
+  { type:'PUMP',  test: r => r.reason === 'AUTO',
+    label:'Pump – Auto',       color:'#ff7f0e', pointStyle:'triangle', radius:6, rotation:180 },
+  { type:'PUMP',  test: r => r.reason === 'MANUAL',
+    label:'Pump – Manual',     color:'#111111', pointStyle:'circle',  radius:5, rotation:0   },
+];
+
+function renderChart(rows, devId) {
+  // Only rows that have Volts and PCB Temp (RESET and PUMP types)
+  const cr = rows.filter(r => r.volts !== '' && r.tempPcb !== '');
+  if (cr.length === 0) return;
+
+  const labels   = cr.map(formatLabel);
+  const voltData = cr.map(r => +r.volts);
+  const tempData = cr.map(r => +r.tempPcb);
+
+  const datasets = [
+    {
+      label: 'Volts',
+      data: voltData,
+      yAxisID: 'y',
+      borderColor: 'steelblue',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      tension: 0.1,
+      order: 10,
+    },
+    {
+      label: 'PCB Temp (°C)',
+      data: tempData,
+      yAxisID: 'y2',
+      borderColor: 'salmon',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderDash: [5, 3],
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      tension: 0.1,
+      order: 9,
+    },
+  ];
+
+  EVENT_DEFS.forEach(def => {
+    const evData = cr.map(r =>
+      r.type === def.type && def.test(r) ? +r.volts : null
+    );
+    if (evData.every(v => v === null)) return;  // skip unused event types
+    datasets.push({
+      label: def.label,
+      data: evData,
+      yAxisID: 'y',
+      showLine: false,
+      spanGaps: false,
+      borderColor: def.color,
+      backgroundColor: def.color,
+      pointStyle: def.pointStyle,
+      pointRadius: def.radius,
+      pointRotation: def.rotation,
+      pointHoverRadius: def.radius + 2,
+      order: 1,
+    });
+  });
+
+  document.getElementById('chart-title').textContent = 'Log Chart — ' + devId;
+  document.getElementById('chart-card').style.display = 'block';
+
+  const ctx = document.getElementById('log-chart').getContext('2d');
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 11 }, usePointStyle: true, padding: 14 },
+        },
+        tooltip: { mode: 'index', intersect: false },
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 10,
+            maxRotation: 35,
+            font: { size: 10 },
+          },
+          grid: { color: '#e8ece8' },
+        },
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: { display: true, text: 'Volts', color: 'steelblue', font: { size: 11 } },
+          ticks: { color: 'steelblue' },
+          grid: { color: '#e8ece8' },
+        },
+        y2: {
+          type: 'linear',
+          position: 'right',
+          title: { display: true, text: 'PCB Temp (°C)', color: 'salmon', font: { size: 11 } },
+          ticks: { color: 'salmon' },
+          grid: { drawOnChartArea: false },
+        },
+      },
+    },
+  });
+}
+
+// ── Save chart PNG ────────────────────────────────────────────────────────────
+function saveChartPng() {
+  const canvas   = document.getElementById('log-chart');
+  const filename = (lastDevId || 'log') + '.png';
+  canvas.toBlob(async (blob) => {
+    if (logsDir) {
+      try {
+        const fh = await logsDir.getFileHandle(filename, { create: true });
+        const w  = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+        log('Chart saved: ' + filename, 'l-ok');
+        return;
+      } catch (e) {
+        log('Could not save chart to folder: ' + e.message + ' — falling back to download.', 'l-err');
+      }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, 'image/png');
+}
+</script>
+</body>
+</html>
