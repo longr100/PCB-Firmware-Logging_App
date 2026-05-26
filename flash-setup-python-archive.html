@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scent Dispenser – Flash App Setup</title>
+  <style>
+    :root {
+      --green:      #2d6a4f;
+      --green-dark: #1b4332;
+      --green-lt:   #52b788;
+      --bg:         #f4f6f4;
+      --card:       #ffffff;
+      --border:     #dde3dd;
+      --text:       #1a1c1a;
+      --muted:      #5a6360;
+      --mono: 'Menlo', 'Consolas', 'Courier New', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text);
+      padding: 32px 16px 56px;
+    }
+    .wrap { max-width: 660px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 { font-size: 1.4rem; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
+    header p  { color: var(--muted); font-size: 0.875rem; }
+
+    .section-title {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+    }
+
+    /* ── OS tabs ── */
+    .os-tabs { display: flex; margin-bottom: 16px; }
+    .os-tab {
+      padding: 7px 22px; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border);
+      background: #eef0ee; color: var(--muted);
+      transition: background 0.15s, color 0.15s;
+    }
+    .os-tab:first-child { border-radius: 7px 0 0 7px; }
+    .os-tab:last-child  { border-radius: 0 7px 7px 0; border-left: none; }
+    .os-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+    .os-panel { display: none; }
+    .os-panel.active { display: block; }
+
+    /* ── Steps ── */
+    ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+    ol.steps li {
+      counter-increment: step;
+      position: relative; padding-left: 34px;
+      font-size: 0.875rem; line-height: 1.6; margin-bottom: 12px;
+    }
+    ol.steps li::before {
+      content: counter(step);
+      position: absolute; left: 0; top: 1px;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--green); color: #fff;
+      border-radius: 50%; font-size: 0.75rem; font-weight: 600;
+    }
+    code {
+      font-family: var(--mono); font-size: 0.8rem;
+      background: #eef0ee; padding: 1px 6px; border-radius: 4px;
+    }
+    .note {
+      font-size: 0.82rem; color: var(--muted);
+      background: #f0f4f0; border-left: 3px solid var(--green-lt);
+      padding: 8px 12px; border-radius: 0 6px 6px 0;
+      margin-top: 8px; line-height: 1.55;
+    }
+
+    /* ── Hardware photos ── */
+    .hw-photos {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0;
+    }
+    @media (max-width: 480px) { .hw-photos { grid-template-columns: 1fr; } }
+    .hw-photo { text-align: center; }
+    .hw-photo img { width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+    .hw-photo figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+
+    /* ── Wiring table ── */
+    .wiring-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 12px 0; }
+    .wiring-table th {
+      text-align: left; font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--border);
+    }
+    .wiring-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+    .wiring-table tr:last-child td { border-bottom: none; }
+    .wire-red   { color: #c0392b; font-weight: 600; }
+    .wire-white { color: #555;    font-weight: 600; }
+    .wire-black { color: #111;    font-weight: 600; }
+
+    .back { margin-bottom: 20px; }
+    .back a { font-size: 0.85rem; color: var(--muted); text-decoration: none; }
+    .back a:hover { text-decoration: underline; }
+
+    footer { text-align: center; margin-top: 24px; font-size: 0.78rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back"><a href="index.html">← Back to main page</a></div>
+
+  <header>
+    <h1>Firmware Flash App – Setup</h1>
+    <p>One-time setup to install and launch the firmware flash utility.</p>
+  </header>
+
+  <!-- ── Connecting the programmer ── -->
+  <div class="section-title">Connecting the UPDI Programmer</div>
+  <div class="card">
+    <p style="font-size:0.875rem;margin-bottom:10px">
+      Firmware flashing uses a <b>UPDI Friend</b> programmer connected to the 3-pin header on the PCB
+      — <em>not</em> the USB-C port (that is only for log download).
+    </p>
+    <div class="hw-photos">
+      <figure class="hw-photo">
+        <img src="images/updi-friend.png" alt="UPDI Friend programmer with wires">
+        <figcaption>UPDI Friend programmer</figcaption>
+      </figure>
+      <figure class="hw-photo">
+        <img src="images/pcb.png" alt="Scent dispenser PCB">
+        <figcaption>Scent dispenser PCB</figcaption>
+      </figure>
+    </div>
+    <table class="wiring-table">
+      <thead><tr><th>Wire</th><th>Connects to</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><span class="wire-red">RED</span></td><td>3V3</td><td>Power</td></tr>
+        <tr><td><span class="wire-white">WHITE</span></td><td>RESET / UPDI</td><td>Data line</td></tr>
+        <tr><td><span class="wire-black">BLACK</span></td><td>GND</td><td>Ground</td></tr>
+      </tbody>
+    </table>
+    <div class="note">
+      <b>Before connecting USB:</b> double-check wiring order and confirm the switch on the UPDI Friend is in the <b>3V</b> position (not 5V).
+    </div>
+  </div>
+
+  <!-- ── Launching the app ── -->
+  <div class="section-title">Launching the Flash App</div>
+  <div class="card">
+    <p style="font-size:0.875rem;margin-bottom:14px">
+      Python 3 must be installed once. After that, double-clicking the launcher handles everything —
+      it installs required packages and opens the app automatically.
+    </p>
+
+    <div class="os-tabs">
+      <div class="os-tab" id="tab-mac" onclick="showOS('mac')">Mac</div>
+      <div class="os-tab" id="tab-win" onclick="showOS('win')">Windows</div>
+    </div>
+
+    <!-- Mac -->
+    <div class="os-panel" id="panel-mac">
+      <ol class="steps">
+        <li>Install Python 3 from <a href="https://www.python.org/downloads/" target="_blank">python.org/downloads</a> if you haven't already. Run the installer and follow the prompts.</li>
+        <li>Download the app files: go to <a href="https://github.com/longr100/PCB-Firmware-Logging_App" target="_blank">github.com/longr100/PCB-Firmware-Logging_App</a> (GitHub is a website for sharing software files). Click the green <b>Code</b> button, then <b>Download ZIP</b>. A file called <code>PCB-Firmware-Logging_App-main.zip</code> will download — unzip it anywhere on your computer.</li>
+        <li>Open the <code>utility</code> folder inside the unzipped folder in Finder.</li>
+        <li><b>First time only:</b> right-click <code>start_mac.command</code> → <b>Open</b> → <b>Open</b> (this tells macOS to trust the file). After that, you can double-click it normally.</li>
+        <li>A Terminal window opens, installs packages (takes ~30 seconds the first time), then the app launches automatically.</li>
+      </ol>
+      <div class="note">
+        Next time: just double-click <code>start_mac.command</code>. Packages are already installed so it opens the app immediately.
+      </div>
+    </div>
+
+    <!-- Windows -->
+    <div class="os-panel" id="panel-win">
+      <ol class="steps">
+        <li>Install Python 3 from <a href="https://www.python.org/downloads/" target="_blank">python.org/downloads</a>. During install, check <b>"Add Python to PATH"</b> before clicking Install.</li>
+        <li>Download the app files: go to <a href="https://github.com/longr100/PCB-Firmware-Logging_App" target="_blank">github.com/longr100/PCB-Firmware-Logging_App</a> (GitHub is a website for sharing software files). Click the green <b>Code</b> button, then <b>Download ZIP</b>. A file called <code>PCB-Firmware-Logging_App-main.zip</code> will download — unzip it anywhere on your computer.</li>
+        <li>Open the <code>utility</code> folder inside the unzipped folder in File Explorer.</li>
+        <li>Double-click <code>start_win.bat</code>. A Command Prompt window opens, checks for drivers, installs packages (~30 seconds first time), then launches the app automatically.</li>
+      </ol>
+      <div class="note">
+        Next time: just double-click <code>start_win.bat</code>. Packages are already installed so it opens the app immediately.
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="section-title" style="margin-bottom:8px">Windows USB Drivers</div>
+        <p style="font-size:0.875rem;margin-bottom:10px">
+          Windows requires drivers to communicate with the USB devices. These are installed once and do not need to be reinstalled. <b>Administrator access is required to install</b> — if you don't have it, ask your IT department.
+        </p>
+        <table class="wiring-table">
+          <thead><tr><th>Driver</th><th>Used for</th><th>Download</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>CH340</b></td>
+              <td>UPDI programmer (firmware flash)</td>
+              <td><a href="https://www.wch-ic.com/downloads/CH341SER_ZIP.html" target="_blank">wch-ic.com ↗</a></td>
+            </tr>
+            <tr>
+              <td><b>FTDI VCP</b></td>
+              <td>USB-C log port (log download)</td>
+              <td><a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank">ftdichip.com ↗</a></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note" style="margin-top:10px">
+          <b>Not sure if drivers are installed?</b> Double-click <code>check_drivers_win.bat</code> in the <code>utility</code> folder. It checks both drivers and prints download links for any that are missing — no administrator access needed to run the check.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── What the app does ── -->
+  <div class="section-title">What the Flash App Does</div>
+  <div class="card">
+    <ul style="font-size:0.875rem;line-height:1.75;padding-left:18px;color:var(--muted)">
+      <li><b style="color:var(--text)">Flash Firmware</b> — select a <code>.hex</code> file and a port, then click Flash. Any new <code>.hex</code> files placed in the <code>utility</code> folder appear automatically in the dropdown.</li>
+      <li><b style="color:var(--text)">Set Device ID</b> — assign a name (up to 16 characters) to a device. This name becomes the filename for downloaded log CSVs.</li>
+    </ul>
+    <div class="note" style="margin-top:12px">
+      The UPDI programmer must be connected to the 3-pin header before selecting a port in the app.
+    </div>
+  </div>
+
+  <footer>WPZ Scent Dispenser Utility</footer>
+
+</div>
+<script>
+  function showOS(os) {
+    document.getElementById('panel-mac').classList.toggle('active', os === 'mac');
+    document.getElementById('panel-win').classList.toggle('active', os === 'win');
+    document.getElementById('tab-mac').classList.toggle('active', os === 'mac');
+    document.getElementById('tab-win').classList.toggle('active', os === 'win');
+  }
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  showOS(isMac ? 'mac' : 'win');
+</script>
+</body>
+</html>

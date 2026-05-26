@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scent Dispenser – Flash App Setup</title>
+  <title>Scent Dispenser – Flash Setup</title>
   <style>
     :root {
       --green:      #2d6a4f;
@@ -38,20 +38,6 @@
       border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
     }
 
-    /* ── OS tabs ── */
-    .os-tabs { display: flex; margin-bottom: 16px; }
-    .os-tab {
-      padding: 7px 22px; font-size: 0.85rem; font-weight: 500;
-      cursor: pointer; border: 1px solid var(--border);
-      background: #eef0ee; color: var(--muted);
-      transition: background 0.15s, color 0.15s;
-    }
-    .os-tab:first-child { border-radius: 7px 0 0 7px; }
-    .os-tab:last-child  { border-radius: 0 7px 7px 0; border-left: none; }
-    .os-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
-    .os-panel { display: none; }
-    .os-panel.active { display: block; }
-
     /* ── Steps ── */
     ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
     ol.steps li {
@@ -77,6 +63,12 @@
       padding: 8px 12px; border-radius: 0 6px 6px 0;
       margin-top: 8px; line-height: 1.55;
     }
+    .note-warn {
+      font-size: 0.82rem; color: #7a4f00;
+      background: #fff8e1; border-left: 3px solid #f9a825;
+      padding: 8px 12px; border-radius: 0 6px 6px 0;
+      margin-top: 14px; line-height: 1.55;
+    }
 
     /* ── Hardware photos ── */
     .hw-photos {
@@ -86,6 +78,12 @@
     .hw-photo { text-align: center; }
     .hw-photo img { width: 100%; border-radius: 8px; border: 1px solid var(--border); }
     .hw-photo figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+
+    /* ── Screenshot ── */
+    .screenshot {
+      width: 100%; border-radius: 8px; border: 1px solid var(--border);
+      margin: 14px 0; display: block;
+    }
 
     /* ── Wiring table ── */
     .wiring-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 12px 0; }
@@ -105,6 +103,9 @@
     .back a:hover { text-decoration: underline; }
 
     footer { text-align: center; margin-top: 24px; font-size: 0.78rem; color: var(--muted); }
+
+    a { color: var(--green); }
+    a:hover { color: var(--green-dark); }
   </style>
 </head>
 <body>
@@ -113,12 +114,12 @@
   <div class="back"><a href="index.html">← Back to main page</a></div>
 
   <header>
-    <h1>Firmware Flash App – Setup</h1>
-    <p>One-time setup to install and launch the firmware flash utility.</p>
+    <h1>Firmware Flash – Setup</h1>
+    <p>Flash firmware to the scent dispenser using a browser-based tool — no installation required.</p>
   </header>
 
-  <!-- ── Connecting the programmer ── -->
-  <div class="section-title">Connecting the UPDI Programmer</div>
+  <!-- ── Step 1: Connect the programmer ── -->
+  <div class="section-title">Step 1 — Connect the UPDI Programmer</div>
   <div class="card">
     <p style="font-size:0.875rem;margin-bottom:10px">
       Firmware flashing uses a <b>UPDI Friend</b> programmer connected to the 3-pin header on the PCB
@@ -147,96 +148,71 @@
     </div>
   </div>
 
-  <!-- ── Launching the app ── -->
-  <div class="section-title">Launching the Flash App</div>
+  <!-- ── Step 2: Flash with WebUPDI ── -->
+  <div class="section-title">Step 2 — Flash Firmware with WebUPDI</div>
   <div class="card">
     <p style="font-size:0.875rem;margin-bottom:14px">
-      Python 3 must be installed once. After that, double-clicking the launcher handles everything —
-      it installs required packages and opens the app automatically.
+      <a href="https://manuelkasper.github.io/webupdi/" target="_blank" rel="noopener">WebUPDI</a>
+      is a free browser-based flashing tool — no installation or Python required.
+      It works on both Mac and Windows in Chrome or Edge.
     </p>
 
-    <div class="os-tabs">
-      <div class="os-tab" id="tab-mac" onclick="showOS('mac')">Mac</div>
-      <div class="os-tab" id="tab-win" onclick="showOS('win')">Windows</div>
-    </div>
+    <ol class="steps">
+      <li>Open <a href="https://manuelkasper.github.io/webupdi/" target="_blank" rel="noopener">manuelkasper.github.io/webupdi</a> in Chrome or Edge.</li>
+      <li>With the UPDI programmer connected (Step 1 above), click <b>Connect</b>. Select the CH340 / USB Serial port from the browser dialog when prompted.</li>
+      <li>Under <b>Device Configuration</b>, select <code>attiny3217</code> from the dropdown. Device memory details will appear confirming the selection.</li>
+      <li>Under <b>Programming Operations</b>, click <b>Choose File</b> and select your <code>.hex</code> firmware file. Confirm <b>Target Memory</b> is set to <b>Flash Memory</b>.</li>
+      <li>Click <b>Program File</b>. The operation log on the right will show progress and confirm when complete.</li>
+    </ol>
 
-    <!-- Mac -->
-    <div class="os-panel" id="panel-mac">
-      <ol class="steps">
-        <li>Install Python 3 from <a href="https://www.python.org/downloads/" target="_blank">python.org/downloads</a> if you haven't already. Run the installer and follow the prompts.</li>
-        <li>Download the app files: go to <a href="https://github.com/longr100/PCB-Firmware-Logging_App" target="_blank">github.com/longr100/PCB-Firmware-Logging_App</a> (GitHub is a website for sharing software files). Click the green <b>Code</b> button, then <b>Download ZIP</b>. A file called <code>PCB-Firmware-Logging_App-main.zip</code> will download — unzip it anywhere on your computer.</li>
-        <li>Open the <code>utility</code> folder inside the unzipped folder in Finder.</li>
-        <li><b>First time only:</b> right-click <code>start_mac.command</code> → <b>Open</b> → <b>Open</b> (this tells macOS to trust the file). After that, you can double-click it normally.</li>
-        <li>A Terminal window opens, installs packages (takes ~30 seconds the first time), then the app launches automatically.</li>
-      </ol>
-      <div class="note">
-        Next time: just double-click <code>start_mac.command</code>. Packages are already installed so it opens the app immediately.
-      </div>
-    </div>
+    <img src="images/webupdi-screenshot.png"
+         alt="WebUPDI interface showing attiny3217 selected and ScentDispenser firmware loaded"
+         class="screenshot"
+         onerror="this.style.display='none'">
 
-    <!-- Windows -->
-    <div class="os-panel" id="panel-win">
-      <ol class="steps">
-        <li>Install Python 3 from <a href="https://www.python.org/downloads/" target="_blank">python.org/downloads</a>. During install, check <b>"Add Python to PATH"</b> before clicking Install.</li>
-        <li>Download the app files: go to <a href="https://github.com/longr100/PCB-Firmware-Logging_App" target="_blank">github.com/longr100/PCB-Firmware-Logging_App</a> (GitHub is a website for sharing software files). Click the green <b>Code</b> button, then <b>Download ZIP</b>. A file called <code>PCB-Firmware-Logging_App-main.zip</code> will download — unzip it anywhere on your computer.</li>
-        <li>Open the <code>utility</code> folder inside the unzipped folder in File Explorer.</li>
-        <li>Double-click <code>start_win.bat</code>. A Command Prompt window opens, checks for drivers, installs packages (~30 seconds first time), then launches the app automatically.</li>
-      </ol>
-      <div class="note">
-        Next time: just double-click <code>start_win.bat</code>. Packages are already installed so it opens the app immediately.
-      </div>
-
-      <div style="margin-top:16px">
-        <div class="section-title" style="margin-bottom:8px">Windows USB Drivers</div>
-        <p style="font-size:0.875rem;margin-bottom:10px">
-          Windows requires drivers to communicate with the USB devices. These are installed once and do not need to be reinstalled. <b>Administrator access is required to install</b> — if you don't have it, ask your IT department.
-        </p>
-        <table class="wiring-table">
-          <thead><tr><th>Driver</th><th>Used for</th><th>Download</th></tr></thead>
-          <tbody>
-            <tr>
-              <td><b>CH340</b></td>
-              <td>UPDI programmer (firmware flash)</td>
-              <td><a href="https://www.wch-ic.com/downloads/CH341SER_ZIP.html" target="_blank">wch-ic.com ↗</a></td>
-            </tr>
-            <tr>
-              <td><b>FTDI VCP</b></td>
-              <td>USB-C log port (log download)</td>
-              <td><a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank">ftdichip.com ↗</a></td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="note" style="margin-top:10px">
-          <b>Not sure if drivers are installed?</b> Double-click <code>check_drivers_win.bat</code> in the <code>utility</code> folder. It checks both drivers and prints download links for any that are missing — no administrator access needed to run the check.
-        </div>
-      </div>
+    <div class="note-warn">
+      <b>When flashing multiple PCBs:</b><br>
+      Always click <b>Disconnect</b> before unplugging the programmer. Simply unplugging without
+      disconnecting can cause connection issues with the next board and may require unplugging
+      and re-plugging the USB cable.<br><br>
+      There is also a known bug: after flashing one board and connecting the next, you may see
+      a <em>"No file loaded"</em> error. To fix it, click <b>Choose File</b>, select any file,
+      then immediately choose the correct <code>.hex</code> file again. This reloads it properly.
     </div>
   </div>
 
-  <!-- ── What the app does ── -->
-  <div class="section-title">What the Flash App Does</div>
+  <!-- ── Windows drivers ── -->
+  <div class="section-title">Windows Users — USB Drivers</div>
   <div class="card">
-    <ul style="font-size:0.875rem;line-height:1.75;padding-left:18px;color:var(--muted)">
-      <li><b style="color:var(--text)">Flash Firmware</b> — select a <code>.hex</code> file and a port, then click Flash. Any new <code>.hex</code> files placed in the <code>utility</code> folder appear automatically in the dropdown.</li>
-      <li><b style="color:var(--text)">Set Device ID</b> — assign a name (up to 16 characters) to a device. This name becomes the filename for downloaded log CSVs.</li>
-    </ul>
-    <div class="note" style="margin-top:12px">
-      The UPDI programmer must be connected to the 3-pin header before selecting a port in the app.
+    <p style="font-size:0.875rem;margin-bottom:10px">
+      Windows requires drivers to communicate with the USB devices. These are installed once
+      and do not need to be reinstalled. <b>Administrator access is required to install.</b>
+      If you lack admin rights, ask your IT department.
+    </p>
+    <table class="wiring-table">
+      <thead><tr><th>Driver</th><th>Used for</th><th>Download</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>CH340</b></td>
+          <td>UPDI programmer (firmware flash)</td>
+          <td><a href="https://www.wch-ic.com/downloads/CH341SER_ZIP.html" target="_blank" rel="noopener">wch-ic.com ↗</a></td>
+        </tr>
+        <tr>
+          <td><b>FTDI VCP</b></td>
+          <td>USB-C log port (log download)</td>
+          <td><a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank" rel="noopener">ftdichip.com ↗</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">
+      If you are unsure whether drivers are installed, connect the device and check
+      <b>Device Manager</b> for any yellow warning icons. Try unplugging and re-plugging
+      the USB cable after installing a driver.
     </div>
   </div>
 
-  <footer>WPZ Scent Dispenser Utility</footer>
+  <footer>WPZ Scent Dispenser Utility &nbsp;·&nbsp; Wildlife Protection &amp; Zoological Projects</footer>
 
 </div>
-<script>
-  function showOS(os) {
-    document.getElementById('panel-mac').classList.toggle('active', os === 'mac');
-    document.getElementById('panel-win').classList.toggle('active', os === 'win');
-    document.getElementById('tab-mac').classList.toggle('active', os === 'mac');
-    document.getElementById('tab-win').classList.toggle('active', os === 'win');
-  }
-  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-  showOS(isMac ? 'mac' : 'win');
-</script>
 </body>
 </html>
