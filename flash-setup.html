@@ -148,6 +148,36 @@
     </div>
   </div>
 
+  <!-- ── Windows drivers ── -->
+  <div class="section-title">Windows Users — USB Drivers</div>
+  <div class="card">
+    <p style="font-size:0.875rem;margin-bottom:10px">
+      Windows requires drivers to communicate with the USB devices. These are installed once
+      and do not need to be reinstalled. <b>Administrator access is required to install.</b>
+      If you lack admin rights, ask your IT department.
+    </p>
+    <table class="wiring-table">
+      <thead><tr><th>Driver</th><th>Used for</th><th>Download</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>CH340</b></td>
+          <td>UPDI programmer (firmware flash)</td>
+          <td><a href="https://www.wch-ic.com/downloads/CH341SER_ZIP.html" target="_blank" rel="noopener">wch-ic.com ↗</a></td>
+        </tr>
+        <tr>
+          <td><b>FTDI VCP</b></td>
+          <td>USB-C log port (log download)</td>
+          <td><a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank" rel="noopener">ftdichip.com ↗</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">
+      If you are unsure whether drivers are installed, connect the device and check
+      <b>Device Manager</b> for any yellow warning icons. Try unplugging and re-plugging
+      the USB cable after installing a driver.
+    </div>
+  </div>
+
   <!-- ── Step 2: Flash with WebUPDI ── -->
   <div class="section-title">Step 2 — Flash Firmware with WebUPDI</div>
   <div class="card">
@@ -178,36 +208,6 @@
       There is also a known bug: after flashing one board and connecting the next, you may see
       a <em>"No file loaded"</em> error. To fix it, click <b>Choose File</b>, select any file,
       then immediately choose the correct <code>.hex</code> file again. This reloads it properly.
-    </div>
-  </div>
-
-  <!-- ── Windows drivers ── -->
-  <div class="section-title">Windows Users — USB Drivers</div>
-  <div class="card">
-    <p style="font-size:0.875rem;margin-bottom:10px">
-      Windows requires drivers to communicate with the USB devices. These are installed once
-      and do not need to be reinstalled. <b>Administrator access is required to install.</b>
-      If you lack admin rights, ask your IT department.
-    </p>
-    <table class="wiring-table">
-      <thead><tr><th>Driver</th><th>Used for</th><th>Download</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><b>CH340</b></td>
-          <td>UPDI programmer (firmware flash)</td>
-          <td><a href="https://www.wch-ic.com/downloads/CH341SER_ZIP.html" target="_blank" rel="noopener">wch-ic.com ↗</a></td>
-        </tr>
-        <tr>
-          <td><b>FTDI VCP</b></td>
-          <td>USB-C log port (log download)</td>
-          <td><a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank" rel="noopener">ftdichip.com ↗</a></td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="note">
-      If you are unsure whether drivers are installed, connect the device and check
-      <b>Device Manager</b> for any yellow warning icons. Try unplugging and re-plugging
-      the USB cable after installing a driver.
     </div>
   </div>
 
